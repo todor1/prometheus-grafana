@@ -1,4 +1,5 @@
-# Hands-On Introduction to Monitoring with Prometheus&Grafana
+# Hands-On Introduction to Monitoring with Prometheus&Grafana  
+
 
 <https://www.udemy.com/course/hands-on-introduction-to-monitoring-with-prometheusgrafana/learn/lecture/56692855#overview>  
 
@@ -20,6 +21,8 @@ docker ps
 Look up: prometheus_http_requests_total  ->  execute  
 <http://localhost:9090/query?g0.expr=prometheus_http_requests_total&g0.show_tree=0&g0.tab=graph&g0.range_input=1h&g0.res_type=auto&g0.res_density=medium&g0.display_mode=lines&g0.show_exemplars=0>  
 
+
+## Change Config  
 
 Status  -> Configuration  
 
