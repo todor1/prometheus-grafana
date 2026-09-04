@@ -1,6 +1,5 @@
 # Hands-On Introduction to Monitoring with Prometheus&Grafana  
 
-
 <https://www.udemy.com/course/hands-on-introduction-to-monitoring-with-prometheusgrafana/learn/lecture/56692855#overview>  
 
 ## Prometheus Getting Started  
@@ -107,6 +106,21 @@ otlp:
   translation_strategy: UnderscoreEscapingWithSuffixes
   label_name_underscore_sanitization: true
   label_name_preserve_multiple_underscores: true
+
+```
+
+
+### Demo App Node.js  
+
+```bash
+mkdir demo-app
+cd demo-app
+node --version
+npm -v
+
+npm init -y
+npm install express prom-client
+
 
 ```
 
@@ -353,3 +367,9 @@ GROUP BY time
 ORDER BY time ASC;
 ```   
 
+# Grafana 11 from ZERO to advanced  
+
+<https://www.udemy.com/course/grafana-from-zero-to-advanced/learn/lecture/43913072#overview>  
+
+
+  
