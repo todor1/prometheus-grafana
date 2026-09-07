@@ -112,6 +112,8 @@ otlp:
 
 ### Demo App Node.js  
 
+Node shell commands  
+
 ```bash
 mkdir demo-app
 cd demo-app
@@ -121,8 +123,82 @@ npm -v
 npm init -y
 npm install express prom-client
 
+node index.js 
+
 
 ```
+
+Prometheus on Docker shell  
+
+```bash
+docker ps
+docker stop prometheus
+docker rm prometheus
+
+code demo-app/prometheus.yaml
+mv demo-app/prometheus.yaml .
+cat prometheus.yaml
+
+# linux command (native Linux Docker)
+# docker run -d --name prometheus -p 9090:9090 -v $(pwd)/prometheus.yaml:/etc/prometheus/prometheus.yml prom/prometheus
+
+# Windows Bash Command (Git Bash + Docker Desktop) ✅ working
+# MSYS_NO_PATHCONV=1  -> stop Git Bash mangling the container path (/etc/...) into a Windows path
+# $(cygpath -m "$PWD") -> host-side path in Windows format (C:/...), which Docker Desktop needs
+MSYS_NO_PATHCONV=1 docker run -d --name prometheus -p 9090:9090 \
+  -v "$(cygpath -m "$PWD")/prometheus.yaml:/etc/prometheus/prometheus.yml" prom/prometheus
+
+# Reload config after editing prometheus.yaml (SIGHUP; the /-/reload API needs --web.enable-lifecycle):
+# docker kill --signal=SIGHUP prometheus
+```
+
+Names of services set up in the [index file](demo-app/index.js) visible under Prometheus menu Query/... Explore metrics: 
+ - api_requests_total
+ - api_active_connections
+ - ...  
+
+rate(api_requests_total[1m])
+
+
+## Issues  
+
+### `docker run` → "Conflict. The container name \"/prometheus\" is already in use"  
+
+**Symptom**  
+```text
+docker: Error response from daemon: Conflict. The container name "/prometheus" is already in use by container "<id>". You have to remove (or rename) that container to be able to reuse that name.
+```
+
+**Cause** — A previous container named `prometheus` still exists (even if it has already exited — e.g. it was stopped or received a termination signal). Docker only allows **one** container per name, so `docker run` with `--name prometheus` fails until the old one is gone.
+
+**Fix**  
+```bash
+docker rm -f prometheus     # force-remove the stale container (or: docker stop prometheus && docker rm prometheus)
+docker ps                  # confirm nothing named prometheus remains
+# then re-run the "Windows Bash Command" (or linux command) above
+```
+
+### Mounted `prometheus.yaml` is ignored → Prometheus runs its default config (Git Bash path mangling)  
+
+**Symptom** — Prometheus starts fine, but the Targets page only lists `prometheus` (`localhost:9090`); the `demo-app` job is missing. Evidence:
+- `docker inspect prometheus --format '{{json .Mounts}}'` shows a garbage mount, e.g. `Source: "...prometheus.yaml;C"` and `Destination: "\Users\...\Git\etc\prometheus\prometheus.yml"` (pointing into the Git install folder).
+- `docker exec prometheus cat /etc/prometheus/prometheus.yml` fails — the container path is rewritten to `C:\Users\...\Git\etc\prometheus\prometheus.yml`.
+- Status → Configuration shows Prometheus's **built-in default** config (auto-generated `alerting`/`otlp`/`runtime` blocks, no `demo-app` job).
+
+**Cause** — Git Bash (MSYS) auto-converts Unix-style paths in command arguments into Windows paths. In `-v $(pwd)/prometheus.yaml:/etc/prometheus/prometheus.yml` the container-side `/etc/prometheus/prometheus.yml` gets rewritten, so the bind mount never attaches to the real file and Prometheus silently falls back to the image's default config.
+
+**Fix** — Disable path conversion and pass the host path in Windows format (the `Windows Bash Command` above):  
+```bash
+MSYS_NO_PATHCONV=1 docker run -d --name prometheus -p 9090:9090 \
+  -v "$(cygpath -m "$PWD")/prometheus.yaml:/etc/prometheus/prometheus.yml" prom/prometheus
+```
+
+**Verify** — `docker inspect prometheus --format '{{json .Mounts}}'` should show `Source: C:/Users/.../prometheus.yaml` → `Destination: /etc/prometheus/prometheus.yml`, and Status → Configuration should list **both** the `prometheus` and `demo-app` jobs.
+
+### Note: reaching host services from a container on Docker Desktop  
+
+`172.17.0.1` (the native-Linux Docker bridge gateway) is **not** reachable from inside a container on Docker Desktop. Use `host.docker.internal` in scrape targets instead — e.g. the `demo-app` target in `prometheus.yaml` is `host.docker.internal:3001`. (The Grafana section below documents the equivalent Grafana → Prometheus URL gotcha.)
+
 
 ## Grafana Getting Started  
 
