@@ -240,7 +240,7 @@ docker exec grafana sh -c 'wget -qO- --timeout=3 http://172.17.0.1:9090/-/health
 # → Prometheus Server is Healthy.
 ```
 
-### Windows 11: `ip a` equivalents (Git Bash / PowerShell)
+#### Windows 11: `ip a` equivalents (Git Bash / PowerShell)
 
 `ip a` doesn't exist on Windows — use `ipconfig`:
 
@@ -260,7 +260,7 @@ Get-NetIPAddress -AddressFamily IPv4 | Format-Table InterfaceAlias, IPAddress
 > container is the **bridge gateway** (`docker network inspect bridge` above), not any
 > adapter listed by `ipconfig`.
 
-### Why `ping host.docker.internal` "doesn't work" (and why that's fine)
+#### Why `ping host.docker.internal` "doesn't work" (and why that's fine)
 
 - `ping` uses **ICMP**, which containers usually don't answer — and minimal container
   images often lack the `ping` binary. A failed ping does **not** mean the URL is broken.
@@ -269,7 +269,7 @@ Get-NetIPAddress -AddressFamily IPv4 | Format-Table InterfaceAlias, IPAddress
 - Test connectivity with a **TCP** request (wget/curl above), not ping.
 - Also: `ping` takes a host/IP only — never `http://...` (the course notes had that too).
 
-### Cleanest option (the course's "fix it properly"): same network + service name
+#### Cleanest option (the course's "fix it properly"): same network + service name
 
 On a **user-defined** network, Docker DNS resolves container names, so no IP is needed:
 
@@ -442,6 +442,21 @@ WHERE $__timeFilter(time)
 GROUP BY time
 ORDER BY time ASC;
 ```   
+
+### Grafana Dashboards  
+
+Dashboards  ->  New Dashboard -> New Panel -> Configure Visualization  
+
+Data Source: Prometheus  
+
+ - Queries -> Builder/**Code** 
+ - sum by(endpoint) (rate(api_requests_total[1m]))  
+ - Run queries 
+ - Time series  => Change  ->  All visualizations
+ - Builder version is helpful for creating the query based on dropdown settings
+
+
+
 
 # Grafana 11 from ZERO to advanced  
 
